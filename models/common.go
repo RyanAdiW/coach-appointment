@@ -6,7 +6,7 @@ type DefaultResponse struct {
 	Message string `json:"message"`
 }
 
-type SuccessResponseWithData struct {
+type ResponseWithData struct {
 	Code    int         `json:"code"`
 	Status  string      `json:"status"`
 	Message string      `json:"message"`
@@ -22,8 +22,8 @@ func SuccessOperationDefault(status, message string) DefaultResponse {
 	}
 }
 
-func SuccessOperationWithData(status, message string, data interface{}) SuccessResponseWithData {
-	return SuccessResponseWithData{
+func SuccessOperationWithData(status, message string, data interface{}) ResponseWithData {
+	return ResponseWithData{
 		200,
 		status,
 		message,
@@ -37,6 +37,15 @@ func BadRequest(status, message string) DefaultResponse {
 		400,
 		status,
 		message,
+	}
+}
+
+func BadRequestWithData(status, message string, data interface{}) ResponseWithData {
+	return ResponseWithData{
+		400,
+		status,
+		message,
+		data,
 	}
 }
 

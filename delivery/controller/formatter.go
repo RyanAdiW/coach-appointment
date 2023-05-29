@@ -1,5 +1,7 @@
 package controller
 
+import "time"
+
 type CreateUserReq struct {
 	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required"`
@@ -17,4 +19,19 @@ type LoginResponse struct {
 	UserId string `json:"user_id"`
 	Role   string `json:"role"`
 	Name   string `json:"name"`
+}
+
+type CreateAppointmentReq struct {
+	CoachName        string    `json:"coach_name" validate:"required"`
+	AppointmentStart time.Time `json:"appointment_start" validate:"required"`
+	AppointmentEnd   time.Time `json:"appointment_end" validate:"required"`
+}
+
+type CoachAvailabilityInfo struct {
+	Timezone            string `json:"timezone"`
+	Day                 string `json:"day"`
+	CoachAvailableFrom  string `json:"coach_available_from"`
+	CoachAvailableUntil string `json:"coach_available_Until"`
+	EnteredTimeFrom     string `json:"entered_time_from"`
+	EnteredTimeUntil    string `json:"entered_time_until"`
 }
