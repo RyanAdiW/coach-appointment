@@ -28,16 +28,16 @@ func TestCreateUser(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			}
+
 			Convey("and CreateUser error prepare query", func() {
 				query := "INSERT INTO users \\()"
 				mock.ExpectPrepare(query)
 
 				err := userRepository.CreateUser(user)
 
-				Convey("It should return an error", func() {
-					So(err, ShouldNotBeNil)
-				})
+				So(err, ShouldNotBeNil)
 			})
+
 			Convey("and CreateUser error exec query", func() {
 				query := "INSERT INTO users \\(name, email, password, role, created_at, updated_at\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5, \\$6\\)"
 				mock.ExpectPrepare(query)
@@ -47,10 +47,9 @@ func TestCreateUser(t *testing.T) {
 
 				err := userRepository.CreateUser(user)
 
-				Convey("It should return an error", func() {
-					So(err, ShouldNotBeNil)
-				})
+				So(err, ShouldNotBeNil)
 			})
+
 			Convey("and CreateUser success", func() {
 				query := "INSERT INTO users \\(name, email, password, role, created_at, updated_at\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5, \\$6\\)"
 				mock.ExpectPrepare(query)
@@ -60,9 +59,7 @@ func TestCreateUser(t *testing.T) {
 
 				err := userRepository.CreateUser(user)
 
-				Convey("It should not return an error", func() {
-					So(err, ShouldBeNil)
-				})
+				So(err, ShouldBeNil)
 			})
 		})
 	})
