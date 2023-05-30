@@ -131,13 +131,13 @@ func TestGetId(t *testing.T) {
 }
 
 func TestGetIdRole(t *testing.T) {
-	Convey("Given Instance GetIdRole", t, func() {
-		Convey("and GetIdRole success", func() {
+	Convey("Given Instance GetRole", t, func() {
+		Convey("and GetRole success", func() {
 			claims := jwt.MapClaims{
 				"authorized": true,
 				"id":         123,
 				"email":      "user@example.com",
-				"id_role":    "coach",
+				"role":       "coach",
 			}
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 			token.Valid = true
@@ -149,12 +149,12 @@ func TestGetIdRole(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(idRole, ShouldEqual, "coach")
 		})
-		Convey("and GetIdRole error empty idRole", func() {
+		Convey("and GetRole error empty idRole", func() {
 			claims := jwt.MapClaims{
 				"authorized": true,
 				"id":         "",
 				"email":      "user@example.com",
-				"id_role":    "",
+				"role":       "",
 			}
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 			token.Valid = true
@@ -165,12 +165,12 @@ func TestGetIdRole(t *testing.T) {
 
 			So(err, ShouldNotBeNil)
 		})
-		Convey("and GetIdRole error user invalid", func() {
+		Convey("and GetRole error user invalid", func() {
 			claims := jwt.MapClaims{
 				"authorized": true,
 				"id":         "123",
 				"email":      "user@example.com",
-				"id_role":    "admin",
+				"role":       "admin",
 				"exp":        time.Now().Add(time.Hour * 24).Unix(),
 			}
 
