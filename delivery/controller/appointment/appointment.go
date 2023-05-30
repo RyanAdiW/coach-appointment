@@ -132,9 +132,15 @@ func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, models.BadRequest("failed", "status not allowed"))
 		}
 
-		switch strings.ToUpper(payload.NewStatus) {
+		payload.NewStatus = strings.ToUpper(payload.NewStatus)
+		switch payload.NewStatus {
 		case STATUS_ACCEPTED:
-			err := AccetpStatus(c, ac.appointmentRepo, payload)
+			err := AccetpOrRejectStatus(c, ac.appointmentRepo, payload)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
+			}
+		case STATUS_REJECTED:
+			err := AccetpOrRejectStatus(c, ac.appointmentRepo, payload)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 			}
@@ -144,7 +150,7 @@ func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
 	}
 }
 
-func AccetpStatus(c echo.Context, appointmentRepo repository.AppointmentRepo, payload controller.UpdateStatusAppointment) error {
+func AccetpOrRejectStatus(c echo.Context, appointmentRepo repository.AppointmentRepo, payload controller.UpdateStatusAppointment) error {
 	role, err := middleware.GetRole(c)
 	if err != nil {
 		return fmt.Errorf("GetRole error")
@@ -172,14 +178,27 @@ func AccetpStatus(c echo.Context, appointmentRepo repository.AppointmentRepo, pa
 		return fmt.Errorf("current status must be CREATED or RESCHEDULING")
 	}
 
-	updateStatReq := models.Appointment{
-		Id:     payload.Id,
-		Status: STATUS_ACCEPTED,
-	}
+	switch payload.NewStatus {
+	case STATUS_ACCEPTED:
+		updateStatReq := models.Appointment{
+			Id:     payload.Id,
+			Status: STATUS_ACCEPTED,
+		}
 
-	err = appointmentRepo.UpdateStatusById(updateStatReq)
-	if err != nil {
-		return fmt.Errorf("failed update appointment status to COACH_ACCEPTED")
+		err = appointmentRepo.UpdateStatusById(updateStatReq)
+		if err != nil {
+			return fmt.Errorf("failed update appointment status to COACH_ACCEPTED")
+		}
+	case STATUS_REJECTED:
+		updateStatReq := models.Appointment{
+			Id:     payload.Id,
+			Status: STATUS_REJECTED,
+		}
+
+		err = appointmentRepo.UpdateStatusById(updateStatReq)
+		if err != nil {
+			return fmt.Errorf("failed update appointment status to COACH_REJECTED")
+		}
 	}
 
 	return nil
