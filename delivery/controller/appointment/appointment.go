@@ -135,12 +135,17 @@ func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
 		payload.NewStatus = strings.ToUpper(payload.NewStatus)
 		switch payload.NewStatus {
 		case STATUS_ACCEPTED:
-			err := AccetpOrRejectStatus(c, ac.appointmentRepo, payload)
+			err := UpdateStatusByCoach(c, ac.appointmentRepo, payload)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 			}
 		case STATUS_REJECTED:
-			err := AccetpOrRejectStatus(c, ac.appointmentRepo, payload)
+			err := UpdateStatusByCoach(c, ac.appointmentRepo, payload)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
+			}
+		case STATUS_RESCHEDULE_REQUESTED:
+			err := UpdateStatusByCoach(c, ac.appointmentRepo, payload)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 			}
@@ -150,14 +155,14 @@ func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
 	}
 }
 
-func AccetpOrRejectStatus(c echo.Context, appointmentRepo repository.AppointmentRepo, payload controller.UpdateStatusAppointment) error {
+func UpdateStatusByCoach(c echo.Context, appointmentRepo repository.AppointmentRepo, payload controller.UpdateStatusAppointment) error {
 	role, err := middleware.GetRole(c)
 	if err != nil {
 		return fmt.Errorf("GetRole error")
 	}
 
 	if strings.ToUpper(role) != ROLE_COACH {
-		return fmt.Errorf("only COACH can ACCEPT request")
+		return fmt.Errorf("role unauthorized")
 	}
 
 	appointment, _ := appointmentRepo.GetAppointmentById(payload.Id)
@@ -171,15 +176,15 @@ func AccetpOrRejectStatus(c echo.Context, appointmentRepo repository.Appointment
 	}
 
 	if appointment.CoachName != name {
-		return fmt.Errorf("Unauthorized")
-	}
-
-	if strings.ToUpper(appointment.Status) != STATUS_CREATED && strings.ToUpper(appointment.Status) != STATUS_RESCHEDULING {
-		return fmt.Errorf("current status must be CREATED or RESCHEDULING")
+		return fmt.Errorf("name unauthorized")
 	}
 
 	switch payload.NewStatus {
 	case STATUS_ACCEPTED:
+		if strings.ToUpper(appointment.Status) != STATUS_CREATED && strings.ToUpper(appointment.Status) != STATUS_RESCHEDULING {
+			return fmt.Errorf("current status must be CREATED or RESCHEDULING")
+		}
+
 		updateStatReq := models.Appointment{
 			Id:     payload.Id,
 			Status: STATUS_ACCEPTED,
@@ -190,6 +195,10 @@ func AccetpOrRejectStatus(c echo.Context, appointmentRepo repository.Appointment
 			return fmt.Errorf("failed update appointment status to COACH_ACCEPTED")
 		}
 	case STATUS_REJECTED:
+		if strings.ToUpper(appointment.Status) != STATUS_CREATED && strings.ToUpper(appointment.Status) != STATUS_RESCHEDULING {
+			return fmt.Errorf("current status must be CREATED or RESCHEDULING")
+		}
+
 		updateStatReq := models.Appointment{
 			Id:     payload.Id,
 			Status: STATUS_REJECTED,
@@ -199,7 +208,20 @@ func AccetpOrRejectStatus(c echo.Context, appointmentRepo repository.Appointment
 		if err != nil {
 			return fmt.Errorf("failed update appointment status to COACH_REJECTED")
 		}
-	}
+	case STATUS_RESCHEDULE_REQUESTED:
+		if strings.ToUpper(appointment.Status) != STATUS_CREATED {
+			return fmt.Errorf("current status must be CREATED")
+		}
 
+		updateStatReq := models.Appointment{
+			Id:     payload.Id,
+			Status: STATUS_RESCHEDULE_REQUESTED,
+		}
+
+		err = appointmentRepo.UpdateStatusById(updateStatReq)
+		if err != nil {
+			return fmt.Errorf("failed update appointment status to RESCHEDULE_REQUESTED")
+		}
+	}
 	return nil
 }
