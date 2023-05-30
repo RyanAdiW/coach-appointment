@@ -5,12 +5,10 @@ import (
 	"fmt"
 
 	"fita/project/coach-appointment/models"
-
-	_middlewares "fita/project/coach-appointment/delivery/middleware"
 )
 
 type AuthRepo interface {
-	LoginEmail(email, password string) (string, error)
+	GetUserByEmailPass(email, password string) (*models.User, error)
 	GetPasswordByEmail(email string) (string, error)
 	GetIdByEmail(email string) (string, error)
 	GetRole(email string) (string, error)
@@ -25,25 +23,24 @@ func NewAuthRepo(db *sql.DB) *authRepo {
 	return &authRepo{db: db}
 }
 
-func (ar *authRepo) LoginEmail(email, password string) (string, error) {
+func (ar *authRepo) GetUserByEmailPass(email, password string) (*models.User, error) {
 	result, err := ar.db.Query("select id, name, email, role FROM users WHERE email = $1 AND password = $2", email, password)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer result.Close()
+
 	if isExist := result.Next(); !isExist {
-		return "", fmt.Errorf("id not found")
+		return nil, fmt.Errorf("id not found")
 	}
+
 	var user models.User
 	errScan := result.Scan(&user.Id, &user.Name, &user.Email, &user.Role)
 	if errScan != nil {
-		return "", errScan
+		return nil, errScan
 	}
-	token, err := _middlewares.CreateToken(user.Id, user.Email, user.Role)
-	if err != nil {
-		return "", err
-	}
-	return token, nil
+
+	return &user, nil
 }
 
 func (ar *authRepo) GetPasswordByEmail(email string) (string, error) {

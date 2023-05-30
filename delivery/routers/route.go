@@ -23,4 +23,5 @@ func RegisterPath(
 
 	// appointment
 	e.POST("/appointment/create", appointmentController.CreateAppointmentController(), middleware.JWTMiddleware())
+	e.PUT("/appointment/update", appointmentController.UpdateStatusAppointment(), middleware.JWTMiddleware())
 }

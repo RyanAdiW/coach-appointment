@@ -5,16 +5,35 @@ import (
 	"fita/project/coach-appointment/delivery/middleware"
 	"fita/project/coach-appointment/models"
 	"fita/project/coach-appointment/repository"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
 )
 
 const (
-	STATUS_CREATED = "CREATED"
+	STATUS_CREATED              = "CREATED"              // by user
+	STATUS_ACCEPTED             = "COACH_ACCEPTED"       // by coach
+	STATUS_REJECTED             = "COACH_REJECTED"       // by coach
+	STATUS_RESCHEDULE_REQUESTED = "RESCHEDULE_REQUESTED" // by coach
+	STATUS_RESCHEDULE_REJECTED  = "RESCHEDULE_REJECTED"  // by user
+	STATUS_RESCHEDULING         = "RESCHEDULING"         // by user
+
+	ROLE_COACH = "COACH"
+	ROLE_USER  = "USER"
 )
+
+var statusMap = map[string]bool{
+	STATUS_CREATED:              true,
+	STATUS_ACCEPTED:             true,
+	STATUS_REJECTED:             true,
+	STATUS_RESCHEDULE_REQUESTED: true,
+	STATUS_RESCHEDULE_REJECTED:  true,
+	STATUS_RESCHEDULING:         true,
+}
 
 type AppointmentController struct {
 	appointmentRepo       repository.AppointmentRepo
@@ -98,4 +117,61 @@ func (ac *AppointmentController) CreateAppointmentController() echo.HandlerFunc 
 
 		return c.JSON(http.StatusOK, models.SuccessOperationDefault("success", "success create appointment"))
 	}
+}
+
+func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// bind data
+		var payload controller.UpdateStatusAppointment
+		if err := c.Bind(&payload); err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusBadRequest, models.BadRequest("failed binding data", err.Error()))
+		}
+
+		if !statusMap[strings.ToUpper(payload.NewStatus)] {
+			return c.JSON(http.StatusBadRequest, models.BadRequest("failed", "status not allowed"))
+		}
+
+		switch strings.ToUpper(payload.NewStatus) {
+		case STATUS_ACCEPTED:
+			err := AccetpStatus(c, ac.appointmentRepo, payload)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
+			}
+		}
+
+		return c.JSON(http.StatusOK, models.SuccessOperationDefault("success", "success update status appointment"))
+	}
+}
+
+func AccetpStatus(c echo.Context, appointmentRepo repository.AppointmentRepo, payload controller.UpdateStatusAppointment) error {
+	role, err := middleware.GetRole(c)
+	if err != nil {
+		return fmt.Errorf("GetRole error")
+	}
+
+	if strings.ToUpper(role) != ROLE_COACH {
+		return fmt.Errorf("only COACH can ACCEPT request")
+	}
+
+	appointment, _ := appointmentRepo.GetAppointmentById(payload.Id)
+	if appointment == nil {
+		return fmt.Errorf("appointment not found")
+	}
+
+	if strings.ToUpper(appointment.Status) != STATUS_CREATED && strings.ToUpper(appointment.Status) != STATUS_RESCHEDULING {
+		return fmt.Errorf("current status must be CREATED or RESCHEDULING")
+	}
+
+	updateStatReq := models.Appointment{
+		Id:     payload.Id,
+		Status: STATUS_ACCEPTED,
+	}
+
+	err = appointmentRepo.UpdateStatusById(updateStatReq)
+	if err != nil {
+		return fmt.Errorf("failed update appointment status to COACH_ACCEPTED")
+	}
+
+	return nil
 }

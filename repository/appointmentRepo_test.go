@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fita/project/coach-appointment/models"
+	"fmt"
 	"testing"
 	"time"
 
@@ -19,17 +20,17 @@ func TestCreateAppointment(t *testing.T) {
 
 		appointmentRepo := NewAppointmentRepo(db)
 
-		Convey("and when CreateAppointment is called", func() {
-			appointment := models.Appointment{
-				UserId:           "user-1",
-				Status:           "CREATED",
-				CoachName:        "dipssy",
-				AppointmentStart: time.Now(),
-				AppointmentEnd:   time.Now(),
-				CreatedAt:        time.Now(),
-				UpdatedAt:        time.Now(),
-			}
+		appointment := models.Appointment{
+			UserId:           "user-1",
+			Status:           "CREATED",
+			CoachName:        "dipssy",
+			AppointmentStart: time.Now(),
+			AppointmentEnd:   time.Now(),
+			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
+		}
 
+		Convey("and when CreateAppointment is called", func() {
 			Convey("and CreateAppointment error prepare query", func() {
 				query := "INSERT INTO appointment \\()"
 				mock.ExpectPrepare(query)
@@ -60,6 +61,88 @@ func TestCreateAppointment(t *testing.T) {
 
 				err := appointmentRepo.CreateAppointment(appointment)
 				So(err, ShouldBeNil)
+			})
+		})
+
+		Convey("and when UpdateStatusById is called", func() {
+			Convey("and UpdateStatusById error prepare query", func() {
+				query := "UPDATE appointments \\"
+				mock.ExpectPrepare(query)
+
+				err := appointmentRepo.UpdateStatusById(appointment)
+
+				So(err, ShouldNotBeNil)
+			})
+
+			Convey("and UpdateStatusById error exec query", func() {
+				query := "UPDATE appointments"
+				mock.ExpectPrepare(query)
+				mock.ExpectExec(query).
+					WithArgs(appointment.CoachName).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+
+				err := appointmentRepo.UpdateStatusById(appointment)
+
+				So(err, ShouldNotBeNil)
+			})
+
+			Convey("and UpdateStatusById success", func() {
+				query := `UPDATE appointments SET status = \$1 WHERE id = \$2`
+				mock.ExpectPrepare(query)
+				mock.ExpectExec(query).
+					WithArgs(appointment.Status, appointment.Id).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+
+				err := appointmentRepo.UpdateStatusById(appointment)
+
+				So(err, ShouldBeNil)
+			})
+		})
+
+		Convey("When GetAppointmentById is called", func() {
+			appointmentID := "123"
+			expectedAppointment := &models.Appointment{
+				Id:               appointmentID,
+				UserId:           "user-1",
+				CoachName:        "dipssy",
+				AppointmentStart: time.Now(),
+				AppointmentEnd:   time.Now(),
+			}
+
+			Convey("and the query returns a single row", func() {
+				mock.ExpectQuery("SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id =").
+					WithArgs(appointmentID).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "status", "coach_name", "appointment_start", "appointment_end"}).
+						AddRow(expectedAppointment.Id, expectedAppointment.UserId, expectedAppointment.Status, expectedAppointment.CoachName, expectedAppointment.AppointmentStart, expectedAppointment.AppointmentEnd))
+
+				appointment, err := appointmentRepo.GetAppointmentById(appointmentID)
+
+				So(err, ShouldBeNil)
+				So(appointment, ShouldResemble, expectedAppointment)
+			})
+
+			Convey("and the query returns an error", func() {
+				mock.ExpectQuery("SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id =").
+					WithArgs(appointmentID).
+					WillReturnError(fmt.Errorf("query error"))
+
+				appointment, err := appointmentRepo.GetAppointmentById(appointmentID)
+
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "query error")
+				So(appointment, ShouldBeNil)
+			})
+
+			Convey("and the query returns no rows", func() {
+				mock.ExpectQuery("SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id =").
+					WithArgs(appointmentID).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "status", "coach_name", "appointment_start", "appointment_end"}))
+
+				appointment, err := appointmentRepo.GetAppointmentById(appointmentID)
+
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "sql: no rows in result set")
+				So(appointment, ShouldBeNil)
 			})
 		})
 	})

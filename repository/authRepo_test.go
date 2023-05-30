@@ -32,7 +32,7 @@ func TestAuthRepo(t *testing.T) {
 
 				mock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0)) // Ignore middleware token creation
 
-				_, err := authRepo.LoginEmail(email, password)
+				_, err := authRepo.GetUserByEmailPass(email, password)
 
 				So(err, ShouldBeNil)
 			})
@@ -43,10 +43,10 @@ func TestAuthRepo(t *testing.T) {
 				query := "select id, name, email, role FROM users WHERE email = $1 AND password = $2"
 				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(email, password).WillReturnRows(rows)
 
-				token, err := authRepo.LoginEmail(email, password)
+				user, err := authRepo.GetUserByEmailPass(email, password)
 
 				So(err.Error(), ShouldEqual, "id not found")
-				So(token, ShouldEqual, "")
+				So(user, ShouldBeNil)
 			})
 
 			Convey("and an error occurs during query execution", func() {
@@ -55,10 +55,10 @@ func TestAuthRepo(t *testing.T) {
 				query := "select id, name, email, role FROM users WHERE email = $1 AND password = $2"
 				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(email, password).WillReturnError(expectedErr)
 
-				token, err := authRepo.LoginEmail(email, password)
+				user, err := authRepo.GetUserByEmailPass(email, password)
 
 				So(err, ShouldEqual, expectedErr)
-				So(token, ShouldEqual, "")
+				So(user, ShouldBeNil)
 			})
 		})
 

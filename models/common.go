@@ -13,7 +13,6 @@ type ResponseWithData struct {
 	Data    interface{} `json:"data"`
 }
 
-// NewInternalServerErrorResponse default internal server error response
 func SuccessOperationDefault(status, message string) DefaultResponse {
 	return DefaultResponse{
 		200,
@@ -31,7 +30,6 @@ func SuccessOperationWithData(status, message string, data interface{}) Response
 	}
 }
 
-// NewBadRequestResponse default not found error response
 func BadRequest(status, message string) DefaultResponse {
 	return DefaultResponse{
 		400,
@@ -49,7 +47,22 @@ func BadRequestWithData(status, message string, data interface{}) ResponseWithDa
 	}
 }
 
-// NewInternalServerErrorResponse default internal server error response
+func UnauthorizedRequest(status, message string) DefaultResponse {
+	return DefaultResponse{
+		401,
+		status,
+		message,
+	}
+}
+
+func NotFound(status, message string) DefaultResponse {
+	return DefaultResponse{
+		404,
+		status,
+		message,
+	}
+}
+
 func InternalServerError(status, message string) DefaultResponse {
 	return DefaultResponse{
 		500,

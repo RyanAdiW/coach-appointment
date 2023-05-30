@@ -53,15 +53,15 @@ func GetId(e echo.Context) (string, error) {
 	return "0", fmt.Errorf("invalid user")
 }
 
-func GetIdRole(e echo.Context) (string, error) {
+func GetRole(e echo.Context) (string, error) {
 	user := e.Get("user").(*jwt.Token)
 	if user.Valid {
 		claims := user.Claims.(jwt.MapClaims)
-		id_role := claims["id_role"].(string)
-		if id_role == "" {
-			return id_role, fmt.Errorf("invalid id role")
+		role := claims["role"].(string)
+		if role == "" {
+			return role, fmt.Errorf("invalid role")
 		}
-		return id_role, nil
+		return role, nil
 	}
 	return "", fmt.Errorf("invalid user")
 }

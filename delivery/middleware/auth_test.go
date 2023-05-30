@@ -144,7 +144,7 @@ func TestGetIdRole(t *testing.T) {
 
 			c := createTestContextWithToken(token)
 
-			idRole, err := GetIdRole(c)
+			idRole, err := GetRole(c)
 
 			So(err, ShouldBeNil)
 			So(idRole, ShouldEqual, "coach")
@@ -161,7 +161,7 @@ func TestGetIdRole(t *testing.T) {
 
 			c := createTestContextWithToken(token)
 
-			_, err := GetIdRole(c)
+			_, err := GetRole(c)
 
 			So(err, ShouldNotBeNil)
 		})
@@ -177,7 +177,7 @@ func TestGetIdRole(t *testing.T) {
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 			c := createTestContextWithToken(token)
 
-			_, err := GetIdRole(c)
+			_, err := GetRole(c)
 
 			So(err, ShouldNotBeNil)
 		})

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fita/project/coach-appointment/delivery/controller"
+	"fita/project/coach-appointment/delivery/middleware"
 	"fita/project/coach-appointment/models"
 	"fita/project/coach-appointment/repository"
 
@@ -39,10 +40,12 @@ func (ac *AuthController) AuthController() echo.HandlerFunc {
 		}
 
 		// get token from login credential
-		token, err := ac.authRepo.LoginEmail(payload.Email, payload.Password)
+		user, err := ac.authRepo.GetUserByEmailPass(payload.Email, payload.Password)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, models.BadRequest("unauthorized", "failed to create token"))
 		}
+
+		token, _ := middleware.CreateToken(user.Id, user.Email, user.Role)
 
 		uid, _ := ac.authRepo.GetIdByEmail(payload.Email)
 		role, _ := ac.authRepo.GetRole(payload.Email)
