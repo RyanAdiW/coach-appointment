@@ -75,6 +75,64 @@ func TestGetEmail(t *testing.T) {
 
 }
 
+func TestGetName(t *testing.T) {
+	Convey("Given TestGetName Instance", t, func() {
+		Convey("GetEmail success", func() {
+			claims := jwt.MapClaims{
+				"authorized": true,
+				"id":         "123",
+				"email":      "user@example.com",
+				"role":       "admin",
+				"name":       "dipssy",
+				"exp":        time.Now().Add(time.Hour * 24).Unix(),
+			}
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+			token.Valid = true
+			c := createTestContextWithToken(token)
+
+			email, err := GetName(c)
+
+			So(err, ShouldBeNil)
+			So(email, ShouldEqual, "dipssy")
+		})
+		Convey("and TestGetName error empty email", func() {
+			claims := jwt.MapClaims{
+				"authorized": true,
+				"id":         "123",
+				"email":      "user@example",
+				"name":       "",
+				"role":       "admin",
+				"exp":        time.Now().Add(time.Hour * 24).Unix(),
+			}
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+			token.Valid = true
+			c := createTestContextWithToken(token)
+
+			_, err := GetName(c)
+
+			So(err, ShouldNotBeNil)
+		})
+		Convey("and TestGetName error user invalid", func() {
+			claims := jwt.MapClaims{
+				"authorized": true,
+				"id":         "123",
+				"email":      "user@example.com",
+				"role":       "admin",
+				"name":       "dipssy",
+				"exp":        time.Now().Add(time.Hour * 24).Unix(),
+			}
+
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+			c := createTestContextWithToken(token)
+
+			_, err := GetName(c)
+
+			So(err, ShouldNotBeNil)
+		})
+	})
+
+}
+
 func TestGetId(t *testing.T) {
 	Convey("Given GetId Instance", t, func() {
 		Convey("and GetId success", func() {
@@ -191,8 +249,9 @@ func TestCreateToken(t *testing.T) {
 			userID := "123"
 			email := "user@example.com"
 			role := "coach"
+			name := "dipssy"
 
-			tokenString, err := CreateToken(userID, email, role)
+			tokenString, err := CreateToken(userID, email, role, name)
 			So(err, ShouldBeNil)
 			So(tokenString, ShouldNotEqual, "")
 
@@ -209,6 +268,7 @@ func TestCreateToken(t *testing.T) {
 			So(claims["id"].(string), ShouldEqual, userID)
 			So(claims["email"].(string), ShouldEqual, email)
 			So(claims["role"].(string), ShouldEqual, role)
+			So(claims["name"].(string), ShouldEqual, name)
 		})
 	})
 }

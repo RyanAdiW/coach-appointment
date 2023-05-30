@@ -16,12 +16,13 @@ func JWTMiddleware() echo.MiddlewareFunc {
 	})
 }
 
-func CreateToken(userid string, email string, role string) (string, error) {
+func CreateToken(userid, email, role, name string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["id"] = userid
 	claims["email"] = email
 	claims["role"] = role
+	claims["name"] = name
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix() //Token expires after 24 hours
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte("rahasia"))
@@ -36,6 +37,19 @@ func GetEmail(e echo.Context) (string, error) {
 			return email, fmt.Errorf("empty email")
 		}
 		return email, nil
+	}
+	return "", fmt.Errorf("invalid user")
+}
+
+func GetName(e echo.Context) (string, error) {
+	user := e.Get("user").(*jwt.Token)
+	if user.Valid {
+		claims := user.Claims.(jwt.MapClaims)
+		name := claims["name"].(string)
+		if name == "" {
+			return name, fmt.Errorf("empty name")
+		}
+		return name, nil
 	}
 	return "", fmt.Errorf("invalid user")
 }

@@ -45,7 +45,7 @@ func (ac *AuthController) AuthController() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, models.BadRequest("unauthorized", "failed to create token"))
 		}
 
-		token, _ := middleware.CreateToken(user.Id, user.Email, user.Role)
+		token, _ := middleware.CreateToken(user.Id, user.Email, user.Role, user.Name)
 
 		uid, _ := ac.authRepo.GetIdByEmail(payload.Email)
 		role, _ := ac.authRepo.GetRole(payload.Email)

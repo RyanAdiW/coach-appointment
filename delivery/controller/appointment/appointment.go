@@ -159,6 +159,15 @@ func AccetpStatus(c echo.Context, appointmentRepo repository.AppointmentRepo, pa
 		return fmt.Errorf("appointment not found")
 	}
 
+	name, err := middleware.GetName(c)
+	if err != nil {
+		return fmt.Errorf("GetName error")
+	}
+
+	if appointment.CoachName != name {
+		return fmt.Errorf("Unauthorized")
+	}
+
 	if strings.ToUpper(appointment.Status) != STATUS_CREATED && strings.ToUpper(appointment.Status) != STATUS_RESCHEDULING {
 		return fmt.Errorf("current status must be CREATED or RESCHEDULING")
 	}
