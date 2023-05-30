@@ -56,14 +56,13 @@ func (ac *AppointmentController) CreateAppointmentController() echo.HandlerFunc 
 			return c.JSON(http.StatusBadRequest, models.BadRequest("failed binding data", err.Error()))
 		}
 
-		//get coach avaiability
-		coachAvlb, err := ac.coachAvailabilityRepo.GetAvailability(payload.CoachName)
+		timezone, err := ac.coachAvailabilityRepo.GetCoachTimezone(payload.CoachName)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach avlb failed", err.Error()))
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach timezone failed", err.Error()))
 		}
 
 		// convert payload local time to coach local time
-		location, err := time.LoadLocation(coachAvlb.Timezone)
+		location, err := time.LoadLocation(timezone)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed LoadLocation time", err.Error()))
 		}
@@ -71,8 +70,10 @@ func (ac *AppointmentController) CreateAppointmentController() echo.HandlerFunc 
 		convertedAppointmentStart := payload.AppointmentStart.In(location)
 		convertedAppointmentEnd := payload.AppointmentEnd.In(location)
 
-		if coachAvlb.DayOfWeek != convertedAppointmentStart.Weekday().String() {
-			return c.JSON(http.StatusBadRequest, models.BadRequest("failed", "coach not available on selected day"))
+		//get coach avaiability
+		coachAvlb, err := ac.coachAvailabilityRepo.GetAvailability(payload.CoachName, convertedAppointmentStart.Weekday().String())
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach avlb failed", err.Error()))
 		}
 
 		avlbAtConv, _ := time.Parse("15:04:05", coachAvlb.AvailableAt)

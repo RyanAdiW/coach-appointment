@@ -22,6 +22,7 @@ func TestGetAvailability(t *testing.T) {
 
 		Convey("and when GetAvailability is called", func() {
 			coachName := "dipssy"
+			dayOfWeek := "Monday"
 			expectedCoachAvailability := &models.CoachAvailability{
 				UserId:         "user-1",
 				CoachName:      "dipssy",
@@ -34,10 +35,10 @@ func TestGetAvailability(t *testing.T) {
 			Convey("and error coach is not found in the database", func() {
 				rows := sqlmock.NewRows([]string{})
 
-				query := "SELECT user_id, coach_name, timezone, day_of_week, available_at, available_until FROM coach_availability WHERE coach_name = $1"
-				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName).WillReturnRows(rows)
+				query := "SELECT user_id, coach_name, timezone, day_of_week, available_at, available_until FROM coach_availability WHERE coach_name = $1 and day_of_week = $2"
+				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName, dayOfWeek).WillReturnRows(rows)
 
-				coachAvailability, err := coachAvailabilityRepo.GetAvailability(coachName)
+				coachAvailability, err := coachAvailabilityRepo.GetAvailability(coachName, dayOfWeek)
 
 				So(err, ShouldNotBeNil)
 				So(coachAvailability, ShouldBeNil)
@@ -46,10 +47,10 @@ func TestGetAvailability(t *testing.T) {
 			Convey("and an error occurs during query execution", func() {
 				expectedErr := errors.New("database error")
 
-				query := "SELECT user_id, coach_name, timezone, day_of_week, available_at, available_until FROM coach_availability WHERE coach_name = $1"
-				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName).WillReturnError(expectedErr)
+				query := "SELECT user_id, coach_name, timezone, day_of_week, available_at, available_until FROM coach_availability WHERE coach_name = $1 and day_of_week = $2"
+				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName, dayOfWeek).WillReturnError(expectedErr)
 
-				coachAvailability, err := coachAvailabilityRepo.GetAvailability(coachName)
+				coachAvailability, err := coachAvailabilityRepo.GetAvailability(coachName, dayOfWeek)
 
 				So(err, ShouldEqual, expectedErr)
 				So(coachAvailability, ShouldBeNil)
@@ -59,13 +60,55 @@ func TestGetAvailability(t *testing.T) {
 				rows := sqlmock.NewRows([]string{"user_id", "coach_name", "timezone", "day_of_week", "available_at", "available_until"}).
 					AddRow(expectedCoachAvailability.UserId, expectedCoachAvailability.CoachName, expectedCoachAvailability.Timezone, expectedCoachAvailability.DayOfWeek, expectedCoachAvailability.AvailableAt, expectedCoachAvailability.AvailableUntil)
 
-				query := "SELECT user_id, coach_name, timezone, day_of_week, available_at, available_until FROM coach_availability WHERE coach_name = $1"
-				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName).WillReturnRows(rows)
+				query := "SELECT user_id, coach_name, timezone, day_of_week, available_at, available_until FROM coach_availability WHERE coach_name = $1 and day_of_week = $2"
+				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName, dayOfWeek).WillReturnRows(rows)
 
-				coachAvailability, err := coachAvailabilityRepo.GetAvailability(coachName)
+				coachAvailability, err := coachAvailabilityRepo.GetAvailability(coachName, dayOfWeek)
 
 				So(err, ShouldBeNil)
 				So(coachAvailability, ShouldResemble, expectedCoachAvailability)
+			})
+		})
+
+		Convey("and when GetCoachTimezone is called", func() {
+			coachName := "dipssy"
+			expectedCoachTimezone := "UTC"
+
+			Convey("and error coachTimezone is not found in the database", func() {
+				rows := sqlmock.NewRows([]string{})
+
+				query := "SELECT timezone WHERE coach_name = $1"
+				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName).WillReturnRows(rows)
+
+				timezone, err := coachAvailabilityRepo.GetCoachTimezone(coachName)
+
+				So(err, ShouldNotBeNil)
+				So(timezone, ShouldEqual, "")
+			})
+
+			Convey("and an error occurs during query execution", func() {
+				expectedErr := errors.New("database error")
+
+				query := "SELECT timezone FROM coach_availability WHERE coach_name = $1"
+				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName).WillReturnError(expectedErr)
+
+				coachAvailability, err := coachAvailabilityRepo.GetCoachTimezone(coachName)
+
+				So(err, ShouldEqual, expectedErr)
+				So(coachAvailability, ShouldEqual, "")
+			})
+
+			Convey("and GetAvailability success", func() {
+				rows := sqlmock.NewRows([]string{"timezone"}).
+					AddRow(expectedCoachTimezone)
+
+				query := "SELECT timezone FROM coach_availability WHERE coach_name = $1"
+				mock.ExpectQuery(regexp.QuoteMeta(query)).WithArgs(coachName).WillReturnRows(rows)
+
+				coachAvailability, err := coachAvailabilityRepo.GetCoachTimezone(coachName)
+
+				So(err, ShouldBeNil)
+				So(coachAvailability, ShouldResemble, expectedCoachTimezone)
 			})
 		})
 	})
