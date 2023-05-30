@@ -31,7 +31,58 @@ The requirement is simple, user can make an appointment with coach if only coach
     - Reschedulling Appointment
     - Reject Reschedule Request from Coach
 
-### &nbsp;Images
+### API
+#### * Auth
+- Login
+```
+POST: {URL}/login
+{
+    "email": "nola.murazik@gmail.com",
+    "password": "NolaMurazik"
+}
+```
+#### * User
+- Register
+```
+POST: {URL}/user/register
+{
+    "name": "poo",
+    "email": "poo@gmail.com",
+    "password": "poo",
+    "role": "user"
+}
+```
+
+#### * Appointment
+- CreateAppointment
+```
+POST: {URL}/appointment/create
+{
+    "coach_name": "Nola Murazik V",
+    "appointment_start":"2023-06-22T01:00:00+08:00",
+    "appointment_end": "2023-06-22T01:30:00+08:00"
+}
+```
+- UpdateStatus
+```
+PUT: {URL}/appointment/update
+{
+    "id":"863adb67-c9f5-4339-af00-e21f45c528bb",
+    "new_status": "coach_accepted"
+}   
+```
+- Rescheduling
+```
+PUT: {URL}/appointment/reschedule
+{
+    "id":"863adb67-c9f5-4339-af00-e21f45c528bb",
+    "appointment_start": "2023-06-21T03:00:00+08:00",
+    "appointment_end": "2023-06-21T03:30:00+08:00"
+}   
+```
+
+
+### Images
 <details>
 <summary>&nbsp;🖼 ERD</summary>
 <img src="image/ERD-coach-appointment.png">
@@ -47,8 +98,8 @@ The requirement is simple, user can make an appointment with coach if only coach
 ![Ubuntu](https://img.shields.io/badge/-Ubuntu-05122A?style=flat&logo=ubuntu)&nbsp;
 
 <!-- FLOW -->
-## &nbsp;Flow
-### &nbsp;Create Appointment
+## Flow
+### Create Appointment
 ```
 Payload create Appointmnet:
 {
@@ -62,7 +113,7 @@ Payload create Appointmnet:
     - setelah itu baru membandingkan waktunya, apakah range waktu yang diinputkan user masuk ke dalam range waktu coach availability time coach.
     - setelah semua tervalidasi, kemudian melakukan insert ke db table "appointment" dengan status appointment "CREATED"
 
-### &nbsp;Update Appointment
+### Update Appointment
 &nbsp;Urutan status appointment<br>
 &nbsp;status yang tersedia:
 - CREATED -- by user
@@ -139,7 +190,7 @@ Payload create Appointmnet:
 - Operasi ini dilakukan oleh coach untuk menerima atau menolak jadwal baru yang diajukan oleh user. Operasinya sama seperti operasi di nomor 1 dan 2.
 
 <!-- HOW TO USE -->
-## &nbsp;How to Use
+## How to Use
 ### * Running on Local Server
 - Install Golang, Postman, PostgreSQL Management System (ex. pgAdmin 4)
 - Clone repository:
