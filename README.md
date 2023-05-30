@@ -76,11 +76,11 @@ Payload create Appointmnet:
 &nbsp;Case1:<br>
 &nbsp;CREATED -> COACH_ACCEPTED -> END
 
-&nbsp;&nbsp;Case2:<br>
-CREATED -> COACH_REJECTED -> END
+&nbsp;Case2:<br>
+&nbsp;CREATED -> COACH_REJECTED -> END
 
-&nbsp;&nbsp;Case3:<br>
-CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULE_REJECTED -> END
+&nbsp;Case3:<br>
+&nbsp;CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULE_REJECTED -> END
 
 &nbsp;Case4:<br>
 &nbsp;CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULING -> COACH_ACCEPTED -> END
