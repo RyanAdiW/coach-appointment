@@ -10,7 +10,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestCreateAppointment(t *testing.T) {
+func TestAppointmentRepo(t *testing.T) {
 	Convey("Given Instance appointmentRepo", t, func() {
 		db, mock, err := sqlmock.New()
 		if err != nil {
@@ -87,10 +87,10 @@ func TestCreateAppointment(t *testing.T) {
 			})
 
 			Convey("and UpdateStatusById success", func() {
-				query := `UPDATE appointments SET status = \$1 WHERE id = \$2`
+				query := `UPDATE appointments SET status = \$1, updated_at = \$2 WHERE id = \$3`
 				mock.ExpectPrepare(query)
 				mock.ExpectExec(query).
-					WithArgs(appointment.Status, appointment.Id).
+					WithArgs(appointment.Status, appointment.UpdatedAt, appointment.Id).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 
 				err := appointmentRepo.UpdateStatusById(appointment)
@@ -143,6 +143,41 @@ func TestCreateAppointment(t *testing.T) {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "sql: no rows in result set")
 				So(appointment, ShouldBeNil)
+			})
+		})
+
+		Convey("and when UpdateScheduleById is called", func() {
+			Convey("and UpdateStatusById error prepare query", func() {
+				query := "UPDATE appointments \\"
+				mock.ExpectPrepare(query)
+
+				err := appointmentRepo.UpdateScheduleById(appointment)
+
+				So(err, ShouldNotBeNil)
+			})
+
+			Convey("and UpdateScheduleById error exec query", func() {
+				query := "UPDATE appointments"
+				mock.ExpectPrepare(query)
+				mock.ExpectExec(query).
+					WithArgs(appointment.CoachName).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+
+				err := appointmentRepo.UpdateScheduleById(appointment)
+
+				So(err, ShouldNotBeNil)
+			})
+
+			Convey("and UpdateScheduleById success", func() {
+				query := `UPDATE appointments SET appointment_start = \$1, appointment_end = \$2, updated_at = \$3, status = \$4 WHERE id = \$5`
+				mock.ExpectPrepare(query)
+				mock.ExpectExec(query).
+					WithArgs(appointment.AppointmentStart, appointment.AppointmentEnd, appointment.UpdatedAt, appointment.Status, appointment.Id).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+
+				err := appointmentRepo.UpdateScheduleById(appointment)
+
+				So(err, ShouldBeNil)
 			})
 		})
 	})

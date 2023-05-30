@@ -32,6 +32,12 @@ type UpdateStatusAppointment struct {
 	NewStatus string `json:"new_status" validate:"required"`
 }
 
+type ReschedullingAppointment struct {
+	Id               string    `json:"id" validate:"required"`
+	AppointmentStart time.Time `json:"appointment_start" validate:"required"`
+	AppointmentEnd   time.Time `json:"appointment_end" validate:"required"`
+}
+
 type CoachAvailabilityInfo struct {
 	Timezone            string `json:"timezone"`
 	Day                 string `json:"day"`

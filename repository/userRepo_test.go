@@ -9,7 +9,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestCreateUser(t *testing.T) {
+func TestUserRepo(t *testing.T) {
 	Convey("Given Instance userRepo", t, func() {
 		db, mock, err := sqlmock.New()
 		if err != nil {

@@ -10,7 +10,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestGetAvailability(t *testing.T) {
+func TestCoachAvailabilityRepo(t *testing.T) {
 	Convey("Given an instance of coachAvailabilityRepo", t, func() {
 		db, mock, err := sqlmock.New()
 		if err != nil {

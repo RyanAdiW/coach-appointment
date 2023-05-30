@@ -55,6 +55,8 @@ func (ac *AppointmentController) CreateAppointmentController() echo.HandlerFunc 
 			return c.JSON(http.StatusBadRequest, models.BadRequest("failed binding data", err.Error()))
 		}
 
+		// validate coach available time
+		// ===========================
 		timezone, err := ac.coachAvailabilityRepo.GetCoachTimezone(payload.CoachName)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach timezone failed", err.Error()))
@@ -97,6 +99,7 @@ func (ac *AppointmentController) CreateAppointmentController() echo.HandlerFunc 
 			}
 			return c.JSON(http.StatusBadRequest, models.BadRequestWithData("failed", "coach not available, choose valid time:", data))
 		}
+		// ===========================
 
 		// set userId from jwt
 		userId, _ := middleware.GetId(c)
@@ -143,6 +146,75 @@ func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 			}
+		}
+
+		return c.JSON(http.StatusOK, models.SuccessOperationDefault("success", "success update status appointment"))
+	}
+}
+
+func (ac *AppointmentController) ReschedullingByUser() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// bind data
+		var payload controller.ReschedullingAppointment
+		if err := c.Bind(&payload); err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusBadRequest, models.BadRequest("failed binding data", err.Error()))
+		}
+
+		appointment, _ := ac.appointmentRepo.GetAppointmentById(payload.Id)
+		if appointment == nil {
+			return c.JSON(http.StatusNotFound, models.NotFound("failed", "appointment not found"))
+		}
+
+		// validate coach available time
+		// ===========================
+		timezone, err := ac.coachAvailabilityRepo.GetCoachTimezone(appointment.CoachName)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach timezone failed", err.Error()))
+		}
+
+		// convert payload local time to coach local time
+		location, err := time.LoadLocation(timezone)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed LoadLocation time", err.Error()))
+		}
+
+		convertedAppointmentStart := payload.AppointmentStart.In(location)
+		convertedAppointmentEnd := payload.AppointmentEnd.In(location)
+
+		//get coach avaiability
+		coachAvlb, err := ac.coachAvailabilityRepo.GetAvailability(appointment.CoachName, convertedAppointmentStart.Weekday().String())
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach avlb failed", err.Error()))
+		}
+
+		avlbAtConv, _ := time.Parse("15:04:05", coachAvlb.AvailableAt)
+		avlbUntilConv, _ := time.Parse("15:04:05", coachAvlb.AvailableUntil)
+
+		payloadStart, _ := time.Parse("15:04:05", convertedAppointmentStart.Format("15:04:05"))
+		payloadEnd, _ := time.Parse("15:04:05", convertedAppointmentEnd.Format("15:04:05"))
+
+		isInvalidTime := payloadStart.Before(avlbAtConv) ||
+			payloadStart.After(avlbUntilConv) ||
+			payloadEnd.Before(avlbAtConv) ||
+			payloadEnd.After(avlbUntilConv)
+
+		if isInvalidTime {
+			data := controller.CoachAvailabilityInfo{
+				Timezone:            coachAvlb.Timezone,
+				Day:                 coachAvlb.DayOfWeek,
+				CoachAvailableFrom:  coachAvlb.AvailableAt,
+				CoachAvailableUntil: coachAvlb.AvailableUntil,
+				EnteredTimeFrom:     convertedAppointmentStart.Format("15:04:05"),
+				EnteredTimeUntil:    convertedAppointmentEnd.Format("15:04:05"),
+			}
+			return c.JSON(http.StatusBadRequest, models.BadRequestWithData("failed", "coach not available, choose valid time:", data))
+		}
+		// ===========================
+
+		err = ReschedullingByUser(c, appointment, ac.appointmentRepo, payload)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 		}
 
 		return c.JSON(http.StatusOK, models.SuccessOperationDefault("success", "success update status appointment"))

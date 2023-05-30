@@ -7,6 +7,7 @@ import (
 	"fita/project/coach-appointment/repository"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -42,13 +43,14 @@ func UpdateStatusByCoach(c echo.Context, appointmentRepo repository.AppointmentR
 		}
 
 		updateStatReq := models.Appointment{
-			Id:     payload.Id,
-			Status: STATUS_ACCEPTED,
+			Id:        payload.Id,
+			Status:    STATUS_ACCEPTED,
+			UpdatedAt: time.Now(),
 		}
 
 		err = appointmentRepo.UpdateStatusById(updateStatReq)
 		if err != nil {
-			return fmt.Errorf("failed update appointment status to COACH_ACCEPTED")
+			return fmt.Errorf("failed update appointment status to COACH_ACCEPTED, error from db")
 		}
 	case STATUS_REJECTED:
 		if strings.ToUpper(appointment.Status) != STATUS_CREATED && strings.ToUpper(appointment.Status) != STATUS_RESCHEDULING {
@@ -56,13 +58,14 @@ func UpdateStatusByCoach(c echo.Context, appointmentRepo repository.AppointmentR
 		}
 
 		updateStatReq := models.Appointment{
-			Id:     payload.Id,
-			Status: STATUS_REJECTED,
+			Id:        payload.Id,
+			Status:    STATUS_REJECTED,
+			UpdatedAt: time.Now(),
 		}
 
 		err = appointmentRepo.UpdateStatusById(updateStatReq)
 		if err != nil {
-			return fmt.Errorf("failed update appointment status to COACH_REJECTED")
+			return fmt.Errorf("failed update appointment status to COACH_REJECTED, error from db")
 		}
 	case STATUS_RESCHEDULE_REQUESTED:
 		if strings.ToUpper(appointment.Status) != STATUS_CREATED {
@@ -70,13 +73,14 @@ func UpdateStatusByCoach(c echo.Context, appointmentRepo repository.AppointmentR
 		}
 
 		updateStatReq := models.Appointment{
-			Id:     payload.Id,
-			Status: STATUS_RESCHEDULE_REQUESTED,
+			Id:        payload.Id,
+			Status:    STATUS_RESCHEDULE_REQUESTED,
+			UpdatedAt: time.Now(),
 		}
 
 		err = appointmentRepo.UpdateStatusById(updateStatReq)
 		if err != nil {
-			return fmt.Errorf("failed update appointment status to RESCHEDULE_REQUESTED")
+			return fmt.Errorf("failed update appointment status to RESCHEDULE_REQUESTED, error from db")
 		}
 	}
 	return nil
@@ -113,14 +117,57 @@ func UpdateStatusByUser(c echo.Context, appointmentRepo repository.AppointmentRe
 		}
 
 		updateStatReq := models.Appointment{
-			Id:     payload.Id,
-			Status: STATUS_RESCHEDULE_REJECTED,
+			Id:        payload.Id,
+			Status:    STATUS_RESCHEDULE_REJECTED,
+			UpdatedAt: time.Now(),
 		}
 
 		err = appointmentRepo.UpdateStatusById(updateStatReq)
 		if err != nil {
-			return fmt.Errorf("failed update appointment status to RESCHEDULE_REJECTED")
+			return fmt.Errorf("failed update appointment status to RESCHEDULE_REJECTED, error from db")
 		}
 	}
+	return nil
+}
+
+func ReschedullingByUser(c echo.Context,
+	appointment *models.Appointment,
+	appointmentRepo repository.AppointmentRepo,
+	payload controller.ReschedullingAppointment) error {
+	role, err := middleware.GetRole(c)
+	if err != nil {
+		return fmt.Errorf("GetRole error")
+	}
+
+	if strings.ToUpper(role) != ROLE_USER {
+		return fmt.Errorf("role unauthorized")
+	}
+
+	userId, err := middleware.GetId(c)
+	if err != nil {
+		return fmt.Errorf("GetId error")
+	}
+
+	if appointment.UserId != userId {
+		return fmt.Errorf("userID unauthorized")
+	}
+
+	if strings.ToUpper(appointment.Status) != STATUS_RESCHEDULE_REQUESTED {
+		return fmt.Errorf("current status must be RESCHEDULE_REQUESTED")
+	}
+
+	req := models.Appointment{
+		Id:               payload.Id,
+		Status:           STATUS_RESCHEDULING,
+		AppointmentStart: payload.AppointmentStart,
+		AppointmentEnd:   payload.AppointmentEnd,
+		UpdatedAt:        time.Now(),
+	}
+
+	err = appointmentRepo.UpdateScheduleById(req)
+	if err != nil {
+		return fmt.Errorf("failed RESCHEDULLING, error from db")
+	}
+
 	return nil
 }
