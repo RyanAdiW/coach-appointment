@@ -5,7 +5,6 @@ import (
 	"fita/project/coach-appointment/delivery/middleware"
 	"fita/project/coach-appointment/models"
 	"fita/project/coach-appointment/repository"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -134,19 +133,13 @@ func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
 		}
 
 		payload.NewStatus = strings.ToUpper(payload.NewStatus)
-		switch payload.NewStatus {
-		case STATUS_ACCEPTED:
+		if payload.NewStatus == STATUS_ACCEPTED || payload.NewStatus == STATUS_REJECTED || payload.NewStatus == STATUS_RESCHEDULE_REQUESTED {
 			err := UpdateStatusByCoach(c, ac.appointmentRepo, payload)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 			}
-		case STATUS_REJECTED:
-			err := UpdateStatusByCoach(c, ac.appointmentRepo, payload)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
-			}
-		case STATUS_RESCHEDULE_REQUESTED:
-			err := UpdateStatusByCoach(c, ac.appointmentRepo, payload)
+		} else if payload.NewStatus == STATUS_RESCHEDULE_REJECTED {
+			err := UpdateStatusByUser(c, ac.appointmentRepo, payload)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 			}
@@ -154,75 +147,4 @@ func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, models.SuccessOperationDefault("success", "success update status appointment"))
 	}
-}
-
-func UpdateStatusByCoach(c echo.Context, appointmentRepo repository.AppointmentRepo, payload controller.UpdateStatusAppointment) error {
-	role, err := middleware.GetRole(c)
-	if err != nil {
-		return fmt.Errorf("GetRole error")
-	}
-
-	if strings.ToUpper(role) != ROLE_COACH {
-		return fmt.Errorf("role unauthorized")
-	}
-
-	appointment, _ := appointmentRepo.GetAppointmentById(payload.Id)
-	if appointment == nil {
-		return fmt.Errorf("appointment not found")
-	}
-
-	name, err := middleware.GetName(c)
-	if err != nil {
-		return fmt.Errorf("GetName error")
-	}
-
-	if appointment.CoachName != name {
-		return fmt.Errorf("name unauthorized")
-	}
-
-	switch payload.NewStatus {
-	case STATUS_ACCEPTED:
-		if strings.ToUpper(appointment.Status) != STATUS_CREATED && strings.ToUpper(appointment.Status) != STATUS_RESCHEDULING {
-			return fmt.Errorf("current status must be CREATED or RESCHEDULING")
-		}
-
-		updateStatReq := models.Appointment{
-			Id:     payload.Id,
-			Status: STATUS_ACCEPTED,
-		}
-
-		err = appointmentRepo.UpdateStatusById(updateStatReq)
-		if err != nil {
-			return fmt.Errorf("failed update appointment status to COACH_ACCEPTED")
-		}
-	case STATUS_REJECTED:
-		if strings.ToUpper(appointment.Status) != STATUS_CREATED && strings.ToUpper(appointment.Status) != STATUS_RESCHEDULING {
-			return fmt.Errorf("current status must be CREATED or RESCHEDULING")
-		}
-
-		updateStatReq := models.Appointment{
-			Id:     payload.Id,
-			Status: STATUS_REJECTED,
-		}
-
-		err = appointmentRepo.UpdateStatusById(updateStatReq)
-		if err != nil {
-			return fmt.Errorf("failed update appointment status to COACH_REJECTED")
-		}
-	case STATUS_RESCHEDULE_REQUESTED:
-		if strings.ToUpper(appointment.Status) != STATUS_CREATED {
-			return fmt.Errorf("current status must be CREATED")
-		}
-
-		updateStatReq := models.Appointment{
-			Id:     payload.Id,
-			Status: STATUS_RESCHEDULE_REQUESTED,
-		}
-
-		err = appointmentRepo.UpdateStatusById(updateStatReq)
-		if err != nil {
-			return fmt.Errorf("failed update appointment status to RESCHEDULE_REQUESTED")
-		}
-	}
-	return nil
 }
