@@ -25,5 +25,6 @@ func RegisterPath(
 	e.POST("/appointment/create", appointmentController.CreateAppointmentController(), middleware.JWTMiddleware())
 	e.PUT("/appointment/update", appointmentController.UpdateStatusAppointment(), middleware.JWTMiddleware())
 	e.PUT("/appointment/reschedule", appointmentController.ReschedullingByUser(), middleware.JWTMiddleware())
-	e.GET("/appointment/list", appointmentController.GetAppointmentByUserId(), middleware.JWTMiddleware())
+	e.GET("/appointment/list-user-id", appointmentController.GetAppointmentByUserId(), middleware.JWTMiddleware())
+	e.GET("/appointment/list-coach-name", appointmentController.GetAppointmentByCoachName(), middleware.JWTMiddleware())
 }

@@ -38,7 +38,7 @@ type ReschedullingAppointment struct {
 	AppointmentEnd   time.Time `json:"appointment_end" validate:"required"`
 }
 
-type QueryParamGetAppointmentByUserId struct {
+type QueryParam struct {
 	Page  int `query:"page" validate:"required"`
 	Limit int `query:"limit" validate:"required"`
 }

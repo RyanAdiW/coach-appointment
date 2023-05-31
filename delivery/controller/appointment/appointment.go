@@ -234,7 +234,7 @@ func (ac *AppointmentController) ReschedullingByUser() echo.HandlerFunc {
 func (ac *AppointmentController) GetAppointmentByUserId() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// bind data
-		var payload controller.QueryParamGetAppointmentByUserId
+		var payload controller.QueryParam
 		if err := c.Bind(&payload); err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusBadRequest, models.BadRequest("failed binding data", err.Error()))
@@ -247,6 +247,31 @@ func (ac *AppointmentController) GetAppointmentByUserId() echo.HandlerFunc {
 		}
 
 		appointments, err := ac.appointmentRepo.GetAppointmentByUserId(userId, payload.Page, payload.Limit)
+		if err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get appointments error"))
+		}
+
+		return c.JSON(http.StatusOK, models.SuccessOperationWithData("success", "success get appointments", appointments))
+	}
+}
+
+func (ac *AppointmentController) GetAppointmentByCoachName() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// bind data
+		var payload controller.QueryParam
+		if err := c.Bind(&payload); err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusBadRequest, models.BadRequest("failed binding data", err.Error()))
+		}
+
+		coachName, err := middleware.GetName(c)
+		if err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get userId error"))
+		}
+
+		appointments, err := ac.appointmentRepo.GetAppointmentByCoachName(coachName, payload.Page, payload.Limit)
 		if err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get appointments error"))
