@@ -5,6 +5,7 @@ import (
 	"fita/project/coach-appointment/delivery/middleware"
 	"fita/project/coach-appointment/models"
 	"fita/project/coach-appointment/repository"
+	"log"
 
 	"net/http"
 
@@ -27,11 +28,13 @@ func (ac *AuthController) AuthController() echo.HandlerFunc {
 
 		//bind request data
 		if err := c.Bind(&payload); err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusBadRequest, models.BadRequest("unauthorized", "failed to bind"))
 		}
 
 		passwordOnDb, err := ac.authRepo.GetPasswordByEmail(payload.Email)
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusBadRequest, models.BadRequest("unauthorized", "email not found"))
 		}
 
@@ -42,6 +45,7 @@ func (ac *AuthController) AuthController() echo.HandlerFunc {
 		// get token from login credential
 		user, err := ac.authRepo.GetUserByEmailPass(payload.Email, payload.Password)
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusBadRequest, models.BadRequest("unauthorized", "failed to create token"))
 		}
 

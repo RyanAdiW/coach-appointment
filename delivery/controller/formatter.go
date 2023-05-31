@@ -39,8 +39,8 @@ type ReschedullingAppointment struct {
 }
 
 type QueryParamGetAppointmentByUserId struct {
-	Page  int `json:"page" validate:"required"`
-	limit int `json:"limit" validate:"required"`
+	Page  int `query:"page" validate:"required"`
+	Limit int `query:"limit" validate:"required"`
 }
 
 type CoachAvailabilityInfo struct {

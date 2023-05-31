@@ -192,7 +192,7 @@ func TestAppointmentRepo(t *testing.T) {
 					{Id: "2", UserId: userId, Status: "PENDING", CoachName: "john", AppointmentStart: time.Now(), AppointmentEnd: time.Now()},
 				}
 
-				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id =`).
+				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE user_id =`).
 					WithArgs(userId, (page-1)*limit, limit).
 					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "status", "coach_name", "appointment_start", "appointment_end"}).
 						AddRow(expectedAppointments[0].Id, expectedAppointments[0].UserId, expectedAppointments[0].Status, expectedAppointments[0].CoachName, expectedAppointments[0].AppointmentStart, expectedAppointments[0].AppointmentEnd).
@@ -205,7 +205,7 @@ func TestAppointmentRepo(t *testing.T) {
 			})
 
 			Convey("and the query returns an error", func() {
-				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id =`).
+				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE user_id =`).
 					WithArgs(userId, (page-1)*limit, limit).
 					WillReturnError(fmt.Errorf("query error"))
 
@@ -223,7 +223,7 @@ func TestAppointmentRepo(t *testing.T) {
 			limit := 10
 
 			Convey("and the page is set to the minimum value (1)", func() {
-				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id = `).
+				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE user_id = `).
 					WithArgs(userId, 0, limit).
 					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "status", "coach_name", "appointment_start", "appointment_end"}))
 
@@ -234,7 +234,7 @@ func TestAppointmentRepo(t *testing.T) {
 			})
 
 			Convey("and the page is set to 0", func() {
-				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id = `).
+				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE user_id = `).
 					WithArgs(userId, 0, limit).
 					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "status", "coach_name", "appointment_start", "appointment_end"}))
 

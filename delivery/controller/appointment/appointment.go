@@ -59,12 +59,14 @@ func (ac *AppointmentController) CreateAppointmentController() echo.HandlerFunc 
 		// ===========================
 		timezone, err := ac.coachAvailabilityRepo.GetCoachTimezone(payload.CoachName)
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach timezone failed", err.Error()))
 		}
 
 		// convert payload local time to coach local time
 		location, err := time.LoadLocation(timezone)
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed LoadLocation time", err.Error()))
 		}
 
@@ -74,6 +76,7 @@ func (ac *AppointmentController) CreateAppointmentController() echo.HandlerFunc 
 		//get coach avaiability
 		coachAvlb, err := ac.coachAvailabilityRepo.GetAvailability(payload.CoachName, convertedAppointmentStart.Weekday().String())
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach avlb failed", err.Error()))
 		}
 
@@ -115,6 +118,7 @@ func (ac *AppointmentController) CreateAppointmentController() echo.HandlerFunc 
 		}
 		err = ac.appointmentRepo.CreateAppointment(insertDb)
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "failed insert request to db"))
 		}
 
@@ -139,11 +143,13 @@ func (ac *AppointmentController) UpdateStatusAppointment() echo.HandlerFunc {
 		if payload.NewStatus == STATUS_ACCEPTED || payload.NewStatus == STATUS_REJECTED || payload.NewStatus == STATUS_RESCHEDULE_REQUESTED {
 			err := UpdateStatusByCoach(c, ac.appointmentRepo, payload)
 			if err != nil {
+				log.Println(err)
 				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 			}
 		} else if payload.NewStatus == STATUS_RESCHEDULE_REJECTED {
 			err := UpdateStatusByUser(c, ac.appointmentRepo, payload)
 			if err != nil {
+				log.Println(err)
 				return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 			}
 		}
@@ -170,12 +176,14 @@ func (ac *AppointmentController) ReschedullingByUser() echo.HandlerFunc {
 		// ===========================
 		timezone, err := ac.coachAvailabilityRepo.GetCoachTimezone(appointment.CoachName)
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach timezone failed", err.Error()))
 		}
 
 		// convert payload local time to coach local time
 		location, err := time.LoadLocation(timezone)
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed LoadLocation time", err.Error()))
 		}
 
@@ -185,6 +193,7 @@ func (ac *AppointmentController) ReschedullingByUser() echo.HandlerFunc {
 		//get coach avaiability
 		coachAvlb, err := ac.coachAvailabilityRepo.GetAvailability(appointment.CoachName, convertedAppointmentStart.Weekday().String())
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, models.InternalServerError("get coach avlb failed", err.Error()))
 		}
 
@@ -214,9 +223,35 @@ func (ac *AppointmentController) ReschedullingByUser() echo.HandlerFunc {
 
 		err = ReschedullingByUser(c, appointment, ac.appointmentRepo, payload)
 		if err != nil {
+			log.Println(err)
 			return c.JSON(http.StatusBadRequest, models.BadRequest("failed", err.Error()))
 		}
 
 		return c.JSON(http.StatusOK, models.SuccessOperationDefault("success", "success update status appointment"))
+	}
+}
+
+func (ac *AppointmentController) GetAppointmentByUserId() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// bind data
+		var payload controller.QueryParamGetAppointmentByUserId
+		if err := c.Bind(&payload); err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusBadRequest, models.BadRequest("failed binding data", err.Error()))
+		}
+
+		userId, err := middleware.GetId(c)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get userId error"))
+		}
+
+		appointments, err := ac.appointmentRepo.GetAppointmentByUserId(userId, payload.Page, payload.Limit)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get appointments error"))
+		}
+
+		return c.JSON(http.StatusOK, models.SuccessOperationWithData("success", "success get appointments", appointments))
 	}
 }
