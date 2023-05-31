@@ -9,7 +9,6 @@ require (
 	github.com/smartystreets/goconvey v1.8.0
 	github.com/spf13/viper v1.15.0
 	github.com/uptrace/bun/driver/pgdriver v1.1.14
-	golang.org/x/crypto v0.9.0
 )
 
 require (
@@ -36,6 +35,7 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
