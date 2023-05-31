@@ -12,6 +12,7 @@ type AppointmentRepo interface {
 	UpdateStatusById(appointment models.Appointment) error
 	GetAppointmentById(id string) (*models.Appointment, error)
 	UpdateScheduleById(appointment models.Appointment) error
+	GetAppointmentByUserId(userId string) ([]models.Appointment, error)
 }
 
 type appointmentRepo struct {
@@ -106,4 +107,28 @@ func (ar *appointmentRepo) UpdateScheduleById(appointment models.Appointment) er
 	}
 
 	return nil
+}
+
+func (ar *appointmentRepo) GetAppointmentByUserId(userId string) ([]models.Appointment, error) {
+	var appointments []models.Appointment
+
+	rows, err := ar.db.Query(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id = $1`, userId)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var appointment models.Appointment
+		err = rows.Scan(&appointment.Id, &appointment.UserId, &appointment.Status, &appointment.CoachName, &appointment.AppointmentStart, &appointment.AppointmentEnd)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		appointments = append(appointments, appointment)
+	}
+
+	return appointments, nil
 }
