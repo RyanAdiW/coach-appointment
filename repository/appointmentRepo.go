@@ -13,6 +13,7 @@ type AppointmentRepo interface {
 	GetAppointmentById(id string) (*models.Appointment, error)
 	UpdateScheduleById(appointment models.Appointment) error
 	GetAppointmentByUserId(userId string, page, limit int) ([]models.Appointment, error)
+	GetAppointmentByCoachName(coachName string, page, limit int) ([]models.Appointment, error)
 }
 
 type appointmentRepo struct {
@@ -118,6 +119,34 @@ func (ar *appointmentRepo) GetAppointmentByUserId(userId string, page, limit int
 	offset := (page - 1) * limit
 
 	rows, err := ar.db.Query(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end, created_at, updated_at FROM appointments WHERE user_id = $1 ORDER BY updated_at DESC OFFSET $2 LIMIT $3`, userId, offset, limit)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		var appointment models.Appointment
+		err = rows.Scan(&appointment.Id, &appointment.UserId, &appointment.Status, &appointment.CoachName, &appointment.AppointmentStart, &appointment.AppointmentEnd, &appointment.CreatedAt, &appointment.UpdatedAt)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		appointments = append(appointments, appointment)
+	}
+
+	return appointments, nil
+}
+
+func (ar *appointmentRepo) GetAppointmentByCoachName(coachName string, page, limit int) ([]models.Appointment, error) {
+	var appointments []models.Appointment
+
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * limit
+
+	rows, err := ar.db.Query(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end, created_at, updated_at FROM appointments WHERE coach_name = $1 ORDER BY updated_at DESC OFFSET $2 LIMIT $3`, coachName, offset, limit)
 	if err != nil {
 		log.Println(err)
 		return nil, err
