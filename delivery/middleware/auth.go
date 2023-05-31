@@ -28,19 +28,6 @@ func CreateToken(userid, email, role, name string) (string, error) {
 	return token.SignedString([]byte("rahasia"))
 }
 
-func GetEmail(e echo.Context) (string, error) {
-	user := e.Get("user").(*jwt.Token)
-	if user.Valid {
-		claims := user.Claims.(jwt.MapClaims)
-		email := claims["email"].(string)
-		if email == "" {
-			return email, fmt.Errorf("empty email")
-		}
-		return email, nil
-	}
-	return "", fmt.Errorf("invalid user")
-}
-
 func GetName(e echo.Context) (string, error) {
 	user := e.Get("user").(*jwt.Token)
 	if user.Valid {

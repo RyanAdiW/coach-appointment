@@ -20,61 +20,6 @@ func createTestContextWithToken(token *jwt.Token) echo.Context {
 	return c
 }
 
-func TestGetEmail(t *testing.T) {
-	Convey("Given TestGetEmail Instance", t, func() {
-		Convey("GetEmail success", func() {
-			claims := jwt.MapClaims{
-				"authorized": true,
-				"id":         "123",
-				"email":      "user@example.com",
-				"id_role":    "admin",
-				"exp":        time.Now().Add(time.Hour * 24).Unix(),
-			}
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-			token.Valid = true
-			c := createTestContextWithToken(token)
-
-			email, err := GetEmail(c)
-
-			So(err, ShouldBeNil)
-			So(email, ShouldEqual, "user@example.com")
-		})
-		Convey("and GetEmail error empty email", func() {
-			claims := jwt.MapClaims{
-				"authorized": true,
-				"id":         "123",
-				"email":      "",
-				"id_role":    "admin",
-				"exp":        time.Now().Add(time.Hour * 24).Unix(),
-			}
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-			token.Valid = true
-			c := createTestContextWithToken(token)
-
-			_, err := GetEmail(c)
-
-			So(err, ShouldNotBeNil)
-		})
-		Convey("and GetEmail error user invalid", func() {
-			claims := jwt.MapClaims{
-				"authorized": true,
-				"id":         "123",
-				"email":      "user@example.com",
-				"id_role":    "admin",
-				"exp":        time.Now().Add(time.Hour * 24).Unix(),
-			}
-
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-			c := createTestContextWithToken(token)
-
-			_, err := GetEmail(c)
-
-			So(err, ShouldNotBeNil)
-		})
-	})
-
-}
-
 func TestGetName(t *testing.T) {
 	Convey("Given TestGetName Instance", t, func() {
 		Convey("GetEmail success", func() {
