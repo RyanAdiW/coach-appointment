@@ -25,11 +25,13 @@ The requirement is simple, user can make an appointment with coach if only coach
     - Accept Appointment
     - Reject Appointment
     - Request Reschedule Appointment
+    - See user appointment list related to the coach
 - User
     - Login/Logout
     - Request Appointment
     - Reschedulling Appointment
     - Reject Reschedule Request from Coach
+    - See user appointment list related to the user
 
 ### API
 #### * Auth
@@ -141,22 +143,21 @@ Payload create Appointmnet:
 - RESCHEDULE_REQUESTED -- by coach
 - RESCHEDULE_REJECTED -- by user
 - RESCHEDULING -- by user
-- END -- cron scheduller
 
 &nbsp;Case1:<br>
-&nbsp;CREATED -> COACH_ACCEPTED -> END
+&nbsp;CREATED -> COACH_ACCEPTED -> end
 
 &nbsp;Case2:<br>
-&nbsp;CREATED -> COACH_REJECTED -> END
+&nbsp;CREATED -> COACH_REJECTED -> end
 
 &nbsp;Case3:<br>
-&nbsp;CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULE_REJECTED -> END
+&nbsp;CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULE_REJECTED -> end
 
 &nbsp;Case4:<br>
-&nbsp;CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULING -> COACH_ACCEPTED -> END
+&nbsp;CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULING -> COACH_ACCEPTED -> end
 
 &nbsp;Case5:<br>
-&nbsp;CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULING -> COACH_REJECTED -> END
+&nbsp;CREATED -> RESCHEDULE_REQUESTED -> RESCHEDULING -> COACH_REJECTED -> end
 
 1. &nbsp;Accept Appointment
 ```
