@@ -80,6 +80,25 @@ PUT: {URL}/appointment/reschedule
     "appointment_end": "2023-06-21T03:30:00+08:00"
 }   
 ```
+- Get Appointmnet By User Id
+```
+GET: {URL}/appointment/list-user-id
+Query param
+{
+    page int,
+    limit int
+}
+```
+
+- Get Appointmnet By Coach Name
+```
+GET: {URL}/appointment/list-coach-name
+Query param
+{
+    page int,
+    limit int
+}
+```
 
 
 ### Images
