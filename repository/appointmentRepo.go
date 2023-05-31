@@ -12,7 +12,7 @@ type AppointmentRepo interface {
 	UpdateStatusById(appointment models.Appointment) error
 	GetAppointmentById(id string) (*models.Appointment, error)
 	UpdateScheduleById(appointment models.Appointment) error
-	GetAppointmentByUserId(userId string) ([]models.Appointment, error)
+	GetAppointmentByUserId(userId string, page, limit int) ([]models.Appointment, error)
 }
 
 type appointmentRepo struct {
@@ -109,10 +109,15 @@ func (ar *appointmentRepo) UpdateScheduleById(appointment models.Appointment) er
 	return nil
 }
 
-func (ar *appointmentRepo) GetAppointmentByUserId(userId string) ([]models.Appointment, error) {
+func (ar *appointmentRepo) GetAppointmentByUserId(userId string, page, limit int) ([]models.Appointment, error) {
 	var appointments []models.Appointment
 
-	rows, err := ar.db.Query(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id = $1`, userId)
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * limit
+
+	rows, err := ar.db.Query(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id = $1 OFFSET $2 LIMIT $3`, userId, offset, limit)
 	if err != nil {
 		log.Println(err)
 		return nil, err

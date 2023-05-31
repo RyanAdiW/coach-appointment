@@ -181,8 +181,10 @@ func TestAppointmentRepo(t *testing.T) {
 			})
 		})
 
-		Convey("When GetAppointmentByUserId is called", func() {
+		Convey("When GetAppointmentByUserId is called with pagination", func() {
 			userId := "user-1"
+			page := 1
+			limit := 10
 
 			Convey("and the query returns appointments", func() {
 				expectedAppointments := []models.Appointment{
@@ -191,12 +193,12 @@ func TestAppointmentRepo(t *testing.T) {
 				}
 
 				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id =`).
-					WithArgs(userId).
+					WithArgs(userId, (page-1)*limit, limit).
 					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "status", "coach_name", "appointment_start", "appointment_end"}).
 						AddRow(expectedAppointments[0].Id, expectedAppointments[0].UserId, expectedAppointments[0].Status, expectedAppointments[0].CoachName, expectedAppointments[0].AppointmentStart, expectedAppointments[0].AppointmentEnd).
 						AddRow(expectedAppointments[1].Id, expectedAppointments[1].UserId, expectedAppointments[1].Status, expectedAppointments[1].CoachName, expectedAppointments[1].AppointmentStart, expectedAppointments[1].AppointmentEnd))
 
-				appointments, err := appointmentRepo.GetAppointmentByUserId(userId)
+				appointments, err := appointmentRepo.GetAppointmentByUserId(userId, page, limit)
 
 				So(err, ShouldBeNil)
 				So(appointments, ShouldResemble, expectedAppointments)
@@ -204,22 +206,39 @@ func TestAppointmentRepo(t *testing.T) {
 
 			Convey("and the query returns an error", func() {
 				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id =`).
-					WithArgs(userId).
+					WithArgs(userId, (page-1)*limit, limit).
 					WillReturnError(fmt.Errorf("query error"))
 
-				appointments, err := appointmentRepo.GetAppointmentByUserId(userId)
+				appointments, err := appointmentRepo.GetAppointmentByUserId(userId, page, limit)
 
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "query error")
 				So(appointments, ShouldBeNil)
 			})
+		})
 
-			Convey("and the query returns no rows", func() {
-				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id =`).
-					WithArgs(userId).
+		Convey("When GetAppointmentByUserId is called with invalid page", func() {
+			userId := "user-1"
+			page := -1
+			limit := 10
+
+			Convey("and the page is set to the minimum value (1)", func() {
+				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id = `).
+					WithArgs(userId, 0, limit).
 					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "status", "coach_name", "appointment_start", "appointment_end"}))
 
-				appointments, err := appointmentRepo.GetAppointmentByUserId(userId)
+				appointments, err := appointmentRepo.GetAppointmentByUserId(userId, page, limit)
+
+				So(err, ShouldBeNil)
+				So(appointments, ShouldBeEmpty)
+			})
+
+			Convey("and the page is set to 0", func() {
+				mock.ExpectQuery(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE id = `).
+					WithArgs(userId, 0, limit).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "status", "coach_name", "appointment_start", "appointment_end"}))
+
+				appointments, err := appointmentRepo.GetAppointmentByUserId(userId, page, limit)
 
 				So(err, ShouldBeNil)
 				So(appointments, ShouldBeEmpty)

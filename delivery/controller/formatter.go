@@ -38,6 +38,11 @@ type ReschedullingAppointment struct {
 	AppointmentEnd   time.Time `json:"appointment_end" validate:"required"`
 }
 
+type QueryParamGetAppointmentByUserId struct {
+	Page  int `json:"page" validate:"required"`
+	limit int `json:"limit" validate:"required"`
+}
+
 type CoachAvailabilityInfo struct {
 	Timezone            string `json:"timezone"`
 	Day                 string `json:"day"`
