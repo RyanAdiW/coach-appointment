@@ -117,16 +117,15 @@ func (ar *appointmentRepo) GetAppointmentByUserId(userId string, page, limit int
 	}
 	offset := (page - 1) * limit
 
-	rows, err := ar.db.Query(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end FROM appointments WHERE user_id = $1 OFFSET $2 LIMIT $3`, userId, offset, limit)
+	rows, err := ar.db.Query(`SELECT id, user_id, status, coach_name, appointment_start, appointment_end, created_at, updated_at FROM appointments WHERE user_id = $1 ORDER BY updated_at DESC OFFSET $2 LIMIT $3`, userId, offset, limit)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-	defer rows.Close()
 
 	for rows.Next() {
 		var appointment models.Appointment
-		err = rows.Scan(&appointment.Id, &appointment.UserId, &appointment.Status, &appointment.CoachName, &appointment.AppointmentStart, &appointment.AppointmentEnd)
+		err = rows.Scan(&appointment.Id, &appointment.UserId, &appointment.Status, &appointment.CoachName, &appointment.AppointmentStart, &appointment.AppointmentEnd, &appointment.CreatedAt, &appointment.UpdatedAt)
 		if err != nil {
 			log.Println(err)
 			return nil, err

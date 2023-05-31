@@ -243,13 +243,13 @@ func (ac *AppointmentController) GetAppointmentByUserId() echo.HandlerFunc {
 		userId, err := middleware.GetId(c)
 		if err != nil {
 			log.Println(err)
-			c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get userId error"))
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get userId error"))
 		}
 
 		appointments, err := ac.appointmentRepo.GetAppointmentByUserId(userId, payload.Page, payload.Limit)
 		if err != nil {
 			log.Println(err)
-			c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get appointments error"))
+			return c.JSON(http.StatusInternalServerError, models.InternalServerError("failed", "get appointments error"))
 		}
 
 		return c.JSON(http.StatusOK, models.SuccessOperationWithData("success", "success get appointments", appointments))
